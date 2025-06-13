@@ -86,3 +86,60 @@ class Validators {
     }
   }
 }
+
+/// ⚙️ Inventory-specific field validators
+class InventoryValidators {
+  static String? validateItemName(String name) {
+    try {
+      if (name.trim().isEmpty) throw Exception("Item name cannot be empty");
+      if (name.length < 2) throw Exception("Item name is too short");
+      return null;
+    } catch (e) {
+      return e.toString().replaceFirst('Exception: ', '');
+    }
+  }
+
+  /// ⚙️ Validate sub item / item option
+  static String? validateOptionName(String name) {
+    try {
+      if (name.trim().isEmpty) throw Exception("Sub item name cannot be empty");
+      return null;
+    } catch (e) {
+      return e.toString().replaceFirst('Exception: ', '');
+    }
+  }
+
+  /// ⚙️ validate sub item price
+  static String? validatePrice(String value) {
+    try {
+      if (value.trim().isEmpty) throw Exception("Price cannot be empty");
+      final double parsed = double.parse(value);
+      if (parsed <= 0) throw Exception("Price must be more than 0");
+      return null;
+    } catch (e) {
+      return e.toString().replaceFirst('Exception: ', '');
+    }
+  }
+}
+
+/// ⚙️ validate staff name
+String? validateStaffName(String? value) {
+  if (value == null || value.trim().isEmpty) {
+    return "Name is required";
+  }
+  if (value.trim().length < 3) {
+    return "Name must be at least 3 characters";
+  }
+  return null;
+}
+
+/// ⚙️ validate staff password
+String? validateStaffPassword(String? value) {
+  if (value == null || value.trim().isEmpty) {
+    return "Password is required";
+  }
+  if (value.trim().length < 4) {
+    return "Minimum 4 characters";
+  }
+  return null;
+}

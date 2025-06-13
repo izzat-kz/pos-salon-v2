@@ -1,23 +1,24 @@
 import '../models/item_catalog.dart';
 
 class BillService {
-  static Map<Item, int> bill = {}; // Store selected items and quantities
+  static Map<Item, int> bill = {};
 
-  static void addToBill(Item item) {
-    bill.update(item, (value) => value + 1, ifAbsent: () => 1);
+  static void addToBill(Item option) {
+    bill.update(option, (value) => value + 1, ifAbsent: () => 1);
   }
 
-  static void updateQuantity(Item item, int change) {
-    final newVal = (bill[item] ?? 0) + change;
+  static void updateQuantity(Item option, int change) {
+    final newVal = (bill[option] ?? 0) + change;
     if (newVal <= 0) {
-      bill.remove(item);
+      bill.remove(option);
     } else {
-      bill[item] = newVal;
+      bill[option] = newVal;
     }
   }
 
   static double calculateSubtotal() {
-    return bill.entries.fold(0, (sum, e) => sum + (e.key.price * e.value));
+    return bill.entries
+        .fold(0, (sum, entry) => sum + (entry.key.price * entry.value));
   }
 
   static void clearBill() {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'screens/home.dart';
+import 'screens/login.dart';
+import 'services/db_helper.dart';
 
 void main() {
   runApp(SalonPosApp());
@@ -10,11 +11,7 @@ class SalonPosApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Hair Salon POS',
-      theme: ThemeData(
-        primarySwatch: Colors.pink,
-        scaffoldBackgroundColor: Colors.grey.shade100,
-      ),
-      home: HomeMenuScreen(),
+      home: LoginPage(),
       debugShowCheckedModeBanner: false,
     );
   }

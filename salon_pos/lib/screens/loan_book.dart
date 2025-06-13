@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/loan_service.dart';
+import '../services/loan_crud.dart';
 import '../models/loan_model.dart';
 import '../services/bill_service.dart';
 import 'loan_list.dart';

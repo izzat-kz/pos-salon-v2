@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
 import '../models/item_catalog.dart';
 import '../services/bill_service.dart';
-import 'receipt.dart';
+import '../services/db_helper.dart';
+import '../widgets/popups.dart';
 import 'payment_option.dart';
 import '../utils/validators.dart';
-import '../widgets/popups.dart';
 import '../styles/button_styles.dart';
 import '../styles/text_styles.dart';
-import 'loan_list.dart';
 import '../widgets/left_sidebar.dart';
 
 class HomeMenuScreen extends StatefulWidget {
@@ -17,35 +15,134 @@ class HomeMenuScreen extends StatefulWidget {
 }
 
 class _HomeMenuScreenState extends State<HomeMenuScreen> {
-  List<Item> services = ItemCatalog.services;
-  List<Item> products = ItemCatalog.products;
-  Map<Item, int> bill = {};
+  List<Map<String, dynamic>> itemTypes = [];
+  List<Item> services = [];
+  List<Item> products = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadItemTypes();
+  }
+
+  void loadItemTypes() async {
+    final db = await DBHelper().database;
+    final result = await db.query('item_type');
+    setState(() {
+      itemTypes = result;
+    });
+  }
+
   bool showServices = true;
 
-  void addToBill(Item item) {
+  void updateQuantity(Item option, int change) {
     setState(() {
-      BillService.addToBill(item);
+      BillService.updateQuantity(option, change);
     });
   }
 
-  void updateQuantity(Item item, int change) {
-    setState(() {
-      BillService.updateQuantity(item, change);
-    });
-  }
+  Future<void> _showSubItemPopup(Map<String, dynamic> item) async {
+    final db = await DBHelper().database;
+    final result = await db.query(
+      'item_option',
+      where: 'item_id = ?',
+      whereArgs: [item['item_id']],
+    );
 
-  double subtotal = BillService.calculateSubtotal();
+    final options = result
+        .map((row) => Item(
+              id: row['sub_id'] as int,
+              name: row['name'].toString(),
+              price: (row['price'] as num).toDouble(),
+              parentItemName: item['name'].toString(),
+              category: item['category'] == 'Services'
+                  ? ItemCategory.service
+                  : ItemCategory.product,
+            ))
+        .toList();
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: Color(0xFF46303C),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: Text(
+          item['name'],
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: 'Oswald',
+            fontSize: 20,
+          ),
+        ),
+        content: Container(
+          width: double.maxFinite,
+          child: ListView.separated(
+            shrinkWrap: true,
+            separatorBuilder: (_, __) => Divider(color: Colors.white24),
+            itemCount: options.length,
+            itemBuilder: (_, i) {
+              final option = options[i];
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    flex: 4,
+                    child: Text(option.name,
+                        style: TextStyle(color: Colors.white, fontSize: 16)),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Text("RM ${option.price.toStringAsFixed(2)}",
+                        style: TextStyle(color: Colors.white70)),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        BillService.addToBill(option);
+                      });
+                      Navigator.pop(context);
+                      popupAddedToBill(context, option.name);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.pink,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text("ADD",
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Close",
+                style: TextStyle(color: Colors.white70, fontSize: 14)),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    // final bill = BillService.bill.entries.toList().reversed.toList();
+
     return Scaffold(
       backgroundColor: Color(0xFFD5D5D5),
       body: Row(
         children: [
-          /* ⏹️ Left Sidebar */
+          // ⏹️ LEFT SIDEBAR
           LeftSidebar(),
 
-          /* ⏹️ Menu Area */
+          // ⏹️ MENU AREA
           Expanded(
             flex: 1,
             child: Column(
@@ -64,7 +161,6 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
                     selectedColor: Colors.white,
                     color: Colors.black54,
                     fillColor: Colors.pink,
-                    disabledColor: Color(0xFF3F3E3A),
                     constraints: BoxConstraints.expand(width: 120, height: 40),
                     children: [
                       Text("Services", style: TextStyle(fontSize: 16)),
@@ -79,43 +175,36 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
                     padding: EdgeInsets.all(10),
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
-                    children: (showServices ? services : products).map((item) {
-                      return Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        elevation: 5,
-                        color: Color(0xFF3F3E3A),
-                        child: Padding(
-                          padding: const EdgeInsets.all(10),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(item.name,
-                                  style: TextStyle(
-                                      fontFamily: "Oswald",
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 25,
-                                      color: Colors.white),
-                                  textAlign: TextAlign.center),
-                              SizedBox(height: 6),
-                              Text("RM ${item.price.toStringAsFixed(2)}",
-                                  style: TextStyle(
-                                      color: Colors.white, fontSize: 16)),
-                              SizedBox(height: 33),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                    backgroundColor: Color(0xFFEF3A5D),
-                                    minimumSize: Size(double.infinity, 65),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(20))),
-                                child: Text("ADD",
+                    children: itemTypes
+                        .where((item) =>
+                            item['category'] ==
+                            (showServices ? 'Services' : 'Products'))
+                        .map((item) {
+                      return GestureDetector(
+                        onTap: () => _showSubItemPopup(item),
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
+                          elevation: 5,
+                          color: Color(0xFF3F3E3A),
+                          child: Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(item['name'],
                                     style: TextStyle(
-                                        fontSize: 20, color: Colors.white)),
-                                onPressed: () => addToBill(item),
-                              )
-                            ],
+                                        fontFamily: "Oswald",
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 25,
+                                        color: Colors.white),
+                                    textAlign: TextAlign.center),
+                                SizedBox(height: 6),
+                                Text("Tap to view options",
+                                    style: TextStyle(
+                                        color: Colors.white54, fontSize: 14)),
+                              ],
+                            ),
                           ),
                         ),
                       );
@@ -126,14 +215,14 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
             ),
           ),
 
-          /* ⏹️ Vertical Divider */
+          // ⏹️ DIVIDER
           Container(
             width: 2,
             color: Colors.black54,
             margin: EdgeInsets.symmetric(vertical: 12),
           ),
 
-          /* ⏹️ Bills Panel */
+          // ⏹️ BILLS PANEL (Grouped by item_type)
           Container(
             width: 350,
             color: Color(0xFFD5D5D5),
@@ -151,7 +240,7 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 12),
                     children:
                         BillService.bill.entries.toList().reversed.map((entry) {
-                      final item = entry.key;
+                      final option = entry.key;
                       final quantity = entry.value;
                       return Card(
                         color: Color(0xFF46303C),
@@ -161,21 +250,35 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
                           child: Row(
                             children: [
                               Expanded(
-                                child: Text(
-                                  item.name,
-                                  style: TextStyle(
-                                    fontFamily: "Oswald",
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      option.parentItemName,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white70,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      option.name,
+                                      style: TextStyle(
+                                        fontFamily: "Oswald",
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    "RM ${(item.price * quantity).toStringAsFixed(2)}",
+                                    "RM ${(option.price * quantity).toStringAsFixed(2)}",
                                     style: TextStyle(
                                       fontFamily: "Oswald",
                                       fontSize: 20,
@@ -199,7 +302,7 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
                                           icon: Icon(Icons.remove,
                                               size: 18, color: Colors.black),
                                           onPressed: () =>
-                                              updateQuantity(item, -1),
+                                              updateQuantity(option, -1),
                                           constraints: BoxConstraints(
                                               maxWidth: 30, maxHeight: 30),
                                           padding: EdgeInsets.zero,
@@ -229,7 +332,7 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
                                           icon: Icon(Icons.add,
                                               size: 18, color: Colors.white),
                                           onPressed: () =>
-                                              updateQuantity(item, 1),
+                                              updateQuantity(option, 1),
                                           constraints: BoxConstraints(
                                               maxWidth: 30, maxHeight: 30),
                                           padding: EdgeInsets.zero,
@@ -247,8 +350,6 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
                   ),
                 ),
                 SizedBox(height: 10),
-
-                /* ⏹️ Clear bill button */
                 ElevatedButton.icon(
                   onPressed: () {
                     setState(() {
@@ -270,9 +371,10 @@ class _HomeMenuScreenState extends State<HomeMenuScreen> {
                         Text(
                           "Subtotal: RM ${BillService.calculateSubtotal().toStringAsFixed(2)}",
                           style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                         SizedBox(height: 10),
                         ElevatedButton(

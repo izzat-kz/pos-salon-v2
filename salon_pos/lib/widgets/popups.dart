@@ -5,7 +5,7 @@ import '../services/bill_service.dart';
 import '../models/item_catalog.dart';
 import 'dart:io';
 import '../models/loan_model.dart';
-import '../services/loan_service.dart';
+import '../services/loan_crud.dart';
 import '../screens/transaction.dart';
 
 /// 📌 **Unified Validation Error Popup (Matching UI)**
@@ -487,11 +487,21 @@ void showLoanDetailsPopup(BuildContext context, Loan loan) {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: ElevatedButton(
-                      onPressed: () {
-                        final convertedBill = loan.billItems.map(
-                          (itemName, quantity) => MapEntry(
-                              ItemCatalog.getItemByName(itemName), quantity),
+                      onPressed: () async {
+                        final entries = await Future.wait(
+                          loan.billItems.entries.map((entry) async {
+                            final item =
+                                await ItemCatalog.getItemByName(entry.key);
+                            if (item != null) {
+                              return MapEntry(item, entry.value);
+                            } else {
+                              throw Exception("Item '${entry.key}' not found.");
+                            }
+                          }),
                         );
+
+                        final convertedBill =
+                            Map<Item, int>.fromEntries(entries);
 
                         Navigator.pushReplacement(
                           context,
@@ -573,5 +583,33 @@ void showLoanPopup(BuildContext context) {
         ],
       );
     },
+  );
+}
+
+void popupAddedToBill(BuildContext context, String itemName) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: const Color(0xFF46303C),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      title: const Text(
+        "Item Added",
+        style: TextStyle(
+          color: Colors.white,
+          fontFamily: 'Oswald',
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      content: Text(
+        "$itemName has been added to the bill.",
+        style: const TextStyle(color: Colors.white70),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("OK", style: TextStyle(color: Colors.pinkAccent)),
+        ),
+      ],
+    ),
   );
 }
