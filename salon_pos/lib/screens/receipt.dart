@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import '../models/item_catalog.dart';
-import 'home.dart';
+import 'menu.dart';
 import '../services/receipt_service.dart';
+import '../utils/session.dart';
 
 class ReceiptScreen extends StatelessWidget {
   final Map<Item, int> bill;
@@ -26,22 +27,77 @@ class ReceiptScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                Text("Receipt Summary",
+                Text(
+                  "Receipt Summary",
+                  style: TextStyle(
+                    fontFamily: "Oswald",
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                if (Session.currentStaff != null)
+                  Text(
+                    "Served by: ${Session.currentStaff!.name} (ID: ${Session.currentStaff!.id})",
                     style: TextStyle(
-                        fontFamily: "Oswald",
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white)),
+                      fontFamily: "Oswald",
+                      fontSize: 14,
+                      color: Colors.white70,
+                    ),
+                  ),
                 Divider(thickness: 2, color: Colors.white),
                 ...bill.entries.map((entry) {
+                  final item = entry.key;
+                  final qty = entry.value;
+                  final total = (item.price * qty).toStringAsFixed(2);
+
                   return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Text(
-                      "${entry.key.name} x${entry.value} - RM ${(entry.key.price * entry.value).toStringAsFixed(2)}",
-                      style: TextStyle(
-                          fontFamily: "Oswald",
-                          fontSize: 18,
-                          color: Colors.white),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Item type + option name
+                        Expanded(
+                          flex: 4,
+                          child: Text(
+                            "${item.parentItemName}, ${item.name}",
+                            style: const TextStyle(
+                              fontFamily: "Oswald",
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+
+                        // Quantity
+                        Expanded(
+                          flex: 1,
+                          child: Text(
+                            "x$qty",
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontFamily: "Oswald",
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+
+                        // Price
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            "RM $total",
+                            textAlign: TextAlign.end,
+                            style: const TextStyle(
+                              fontFamily: "Oswald",
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 }).toList(),
@@ -87,7 +143,7 @@ class ReceiptScreen extends StatelessWidget {
                   bill.clear();
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => HomeMenuScreen()),
+                    MaterialPageRoute(builder: (context) => MenuScreen()),
                   );
                 },
                 style: ElevatedButton.styleFrom(

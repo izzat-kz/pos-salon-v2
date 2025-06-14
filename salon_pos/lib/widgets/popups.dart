@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../screens/home.dart';
+import '../screens/menu.dart';
 import '../screens/receipt.dart';
 import '../services/bill_service.dart';
 import '../models/item_catalog.dart';
@@ -7,6 +7,7 @@ import 'dart:io';
 import '../models/loan_model.dart';
 import '../services/loan_crud.dart';
 import '../screens/transaction.dart';
+import '../screens/login.dart';
 
 /// 📌 **Unified Validation Error Popup (Matching UI)**
 void popupValidationErrors(BuildContext context, List<String> errors) {
@@ -218,7 +219,7 @@ void popupEmtpyBill(BuildContext context, String title, String message) {
 }
 
 /// 📌 **Popup for Exit Confirmation**
-void popupExitConfirmation(BuildContext context) {
+void popupLogoutConfirmation(BuildContext context) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -227,13 +228,13 @@ void popupExitConfirmation(BuildContext context) {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
-        title: Text("Exit Application",
+        title: Text("Logout Application",
             style: TextStyle(
                 fontFamily: "Oswald",
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Colors.white)),
-        content: Text("Are you sure you want to exit?",
+        content: Text("Are you sure you want to logout?",
             style: TextStyle(
                 fontFamily: "Oswald", fontSize: 18, color: Colors.white70)),
         actions: [
@@ -262,10 +263,14 @@ void popupExitConfirmation(BuildContext context) {
               ),
             ),
             onPressed: () {
-              Navigator.pop(context);
-              exit(0);
+              Navigator.pop(context); // Close dialog
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => LoginPage()),
+                (route) => false,
+              );
             },
-            child: Text("Exit",
+            child: Text("Logout",
                 style: TextStyle(
                     fontFamily: "Oswald",
                     fontSize: 18,
@@ -542,7 +547,8 @@ void showLoanDetailsPopup(BuildContext context, Loan loan) {
   );
 }
 
-void showLoanPopup(BuildContext context) {
+/// 📌 **Popup for Loan Restrictions**
+void showLoanRestrictPopup(BuildContext context) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -586,30 +592,150 @@ void showLoanPopup(BuildContext context) {
   );
 }
 
-void popupAddedToBill(BuildContext context, String itemName) {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      backgroundColor: const Color(0xFF46303C),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      title: const Text(
-        "Item Added",
-        style: TextStyle(
-          color: Colors.white,
-          fontFamily: 'Oswald',
-          fontWeight: FontWeight.bold,
+/// 📌 **Popup for Sub Items in menu.dart**
+class SubItemPopup extends StatelessWidget {
+  final String itemName;
+  final List<Item> options;
+  final VoidCallback onOptionAdded;
+
+  const SubItemPopup({
+    required this.itemName,
+    required this.options,
+    required this.onOptionAdded,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: const Color(0xFF2B2D42),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        width: 600,
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              itemName,
+              style: const TextStyle(
+                fontFamily: 'Oswald',
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFFDCB6E),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: options.map((option) {
+                return Container(
+                  width: 250,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF414863),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      // Option name
+                      Expanded(
+                        child: Text(
+                          option.name,
+                          style: const TextStyle(
+                            fontFamily: "Oswald",
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 4),
+
+                      // Price + ADD
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            "RM ${option.price.toStringAsFixed(2)}",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.white70,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          SizedBox(
+                            height: 34,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                BillService.addToBill(option);
+                                onOptionAdded();
+                                Navigator.pop(context);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF00B894),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 0),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                              child: const Text("ADD",
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Close",
+                    style: TextStyle(color: Colors.white70, fontSize: 14)),
+              ),
+            ),
+          ],
         ),
       ),
-      content: Text(
-        "$itemName has been added to the bill.",
-        style: const TextStyle(color: Colors.white70),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text("OK", style: TextStyle(color: Colors.pinkAccent)),
-        ),
-      ],
-    ),
-  );
+    );
+  }
 }
+
+
+// void popupAddedToBill(BuildContext context, String itemName) {
+//   showDialog(
+//     context: context,
+//     builder: (context) => AlertDialog(
+//       backgroundColor: const Color(0xFF46303C),
+//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+//       title: const Text(
+//         "Item Added",
+//         style: TextStyle(
+//           color: Colors.white,
+//           fontFamily: 'Oswald',
+//           fontWeight: FontWeight.bold,
+//         ),
+//       ),
+//       content: Text(
+//         "$itemName has been added to the bill.",
+//         style: const TextStyle(color: Colors.white70),
+//       ),
+//       actions: [
+//         TextButton(
+//           onPressed: () => Navigator.pop(context),
+//           child: const Text("OK", style: TextStyle(color: Colors.pinkAccent)),
+//         ),
+//       ],
+//     ),
+//   );
+// }

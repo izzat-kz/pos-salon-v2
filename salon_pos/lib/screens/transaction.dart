@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/item_catalog.dart';
 import 'loan_book.dart';
 import 'receipt.dart';
-import 'home.dart';
+import 'menu.dart';
 import '../services/bill_service.dart';
 import '../utils/validators.dart';
 import '../widgets/popups.dart';
@@ -155,7 +155,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                               // ⏹️ Ribbon Container
                               GestureDetector(
                                 onTap: widget.isLoanTransaction
-                                    ? () => showLoanPopup(context)
+                                    ? () => showLoanRestrictPopup(context)
                                     : () {
                                         Navigator.pushReplacement(
                                           context,

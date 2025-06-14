@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:salon_pos/screens/home.dart';
+import 'package:salon_pos/screens/menu.dart';
 import '../screens/loan_list.dart';
 import '../screens/admin/dashboard.dart';
 import '../styles/button_styles.dart';
 import '../styles/text_styles.dart';
 import 'popups.dart';
+import '../utils/session.dart';
+import 'staff_badge.dart';
 
 class LeftSidebar extends StatelessWidget {
   final bool isLoanListScreen;
@@ -30,7 +32,14 @@ class LeftSidebar extends StatelessWidget {
               fallbackHeight: 60,
             ),
           ),
+
           const SizedBox(height: 10),
+
+          if (!isAdmin && Session.currentStaff != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: StaffBadge(staff: Session.currentStaff!),
+            ),
 
           // Only show Home <-> Loan List toggle if not admin
           if (!isAdmin)
@@ -42,7 +51,7 @@ class LeftSidebar extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => HomeMenuScreen(),
+                        builder: (context) => MenuScreen(),
                       ),
                     );
                   } else {
@@ -84,17 +93,14 @@ class LeftSidebar extends StatelessWidget {
 
           const Spacer(),
 
-          // Exit only for non-admins
-          if (!isAdmin)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton(
-                onPressed: () => popupExitConfirmation(context),
-                style: AppButtonStyles.exitButton,
-                child: const Icon(Icons.exit_to_app,
-                    size: 22, color: Colors.white),
-              ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+              onPressed: () => popupLogoutConfirmation(context),
+              style: AppButtonStyles.exitButton,
+              child: const Icon(Icons.logout, size: 22, color: Colors.white),
             ),
+          ),
         ],
       ),
     );

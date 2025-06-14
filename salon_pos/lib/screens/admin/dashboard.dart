@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../login.dart';
 import 'inventory.dart';
+import '../../widgets/popups.dart';
 import 'staff_management.dart';
 
 class AdminDashboard extends StatelessWidget {
@@ -62,12 +63,7 @@ class AdminDashboard extends StatelessWidget {
                   ),
                   const SizedBox(height: 60),
                   ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginPage()),
-                      );
-                    },
+                    onPressed: () => popupLogoutConfirmation(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.greenAccent.shade400,
                       padding: const EdgeInsets.symmetric(

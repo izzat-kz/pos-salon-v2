@@ -7,6 +7,7 @@ import 'package:pdf/pdf.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:path_provider/path_provider.dart';
+import '../utils/session.dart';
 
 class ReceiptService {
   static Future<void> printReceipt(Map<Item, int> bill, double subtotal) async {
@@ -31,6 +32,12 @@ class ReceiptService {
               pw.Text("-- RECEIPT --", style: pw.TextStyle(fontSize: 23)),
               pw.SizedBox(height: 5),
 
+              if (Session.currentStaff != null)
+                pw.Text(
+                  "Served by: ${Session.currentStaff!.name} (ID: ${Session.currentStaff!.id})",
+                  style: pw.TextStyle(fontSize: 12),
+                ),
+
               pw.Text("Date: $formattedDate",
                   style: pw.TextStyle(fontSize: 14)),
 
@@ -54,13 +61,35 @@ class ReceiptService {
                     return pw.Padding(
                       padding: const pw.EdgeInsets.symmetric(vertical: 4),
                       child: pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                         children: [
-                          pw.Text("${entry.key.name} x${entry.value}",
-                              style: pw.TextStyle(fontSize: 14)),
-                          pw.Text(
+                          // Item Type + Name
+                          pw.Expanded(
+                            flex: 4,
+                            child: pw.Text(
+                              "${entry.key.parentItemName}, ${entry.key.name}",
+                              style: pw.TextStyle(fontSize: 14),
+                            ),
+                          ),
+
+                          // Quantity
+                          pw.Expanded(
+                            flex: 1,
+                            child: pw.Text(
+                              "x${entry.value}",
+                              textAlign: pw.TextAlign.center,
+                              style: pw.TextStyle(fontSize: 14),
+                            ),
+                          ),
+
+                          // Price
+                          pw.Expanded(
+                            flex: 2,
+                            child: pw.Text(
                               "RM ${(entry.key.price * entry.value).toStringAsFixed(2)}",
-                              style: pw.TextStyle(fontSize: 14)),
+                              textAlign: pw.TextAlign.right,
+                              style: pw.TextStyle(fontSize: 14),
+                            ),
+                          ),
                         ],
                       ),
                     );

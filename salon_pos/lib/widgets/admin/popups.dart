@@ -202,7 +202,7 @@ Future<void> showEditStaffPopup({
   await showDialog(
     context: context,
     builder: (_) => Dialog(
-      backgroundColor: const Color(0xFFFFEAD1),
+      backgroundColor: const Color(0xFFFDF7F0),
       shape: RoundedRectangleBorder(
         // side: const BorderSide(color: Color.fromARGB(255, 0, 136, 178), width: 4),
         borderRadius: BorderRadius.circular(15),
@@ -394,288 +394,538 @@ typedef OnDeleteItem = Future<void> Function();
 // ⚙️ Add Item Popup
 class InventoryPopups {
   static void showAddItemPopup({
-    required BuildContext context,
-    required String category,
-    required OnSaveItem onSave,
-  }) {
-    final itemController = TextEditingController();
-    final optionNameController = TextEditingController();
-    final optionPriceController = TextEditingController();
-    List<Map<String, String>> itemOptions = [];
+  required BuildContext context,
+  required String category,
+  required OnSaveItem onSave,
+}) {
+  final itemController = TextEditingController();
+  final subItemNameController = TextEditingController();
+  final subItemPriceController = TextEditingController();
+  List<Map<String, String>> itemOptions = [];
 
-    String capitalizeEachWord(String text) {
-      return text
-          .split(' ')
-          .map((word) => word.isEmpty
-              ? ''
-              : word[0].toUpperCase() + word.substring(1).toLowerCase())
-          .join(' ');
-    }
+  bool isPendingRowActive() =>
+      subItemNameController.text.trim().isNotEmpty ||
+      subItemPriceController.text.trim().isNotEmpty;
 
-    showDialog(
-      context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: Text('Add $category Type'),
-          content: SingleChildScrollView(
+  String capitalizeEachWord(String text) {
+    return text
+        .split(' ')
+        .map((word) => word.isEmpty
+            ? ''
+            : word[0].toUpperCase() + word.substring(1).toLowerCase())
+        .join(' ');
+  }
+
+  showDialog(
+    context: context,
+    builder: (_) => StatefulBuilder(
+      builder: (context, setState) => Dialog(
+        backgroundColor: const Color(0xFFFDF7F0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+          side: const BorderSide(color: Color(0xFF00B25D), width: 4),
+        ),
+        child: Container(
+          width: 500,
+          padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
             child: Column(
               children: [
+                Text(
+                  "Add $category Type",
+                  style: const TextStyle(
+                    fontFamily: "Oswald",
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Item Name
                 TextField(
                   controller: itemController,
                   textCapitalization: TextCapitalization.words,
-                  decoration: InputDecoration(labelText: 'Item Name'),
+                  decoration: const InputDecoration(
+                    labelText: 'Item Name',
+                    labelStyle: TextStyle(fontFamily: "Oswald"),
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-                Divider(),
-                ...itemOptions.map((s) => ListTile(
-                      title: Text(s['name'] ?? ''),
-                      subtitle: Text("RM ${s['price']}"),
+                const SizedBox(height: 18),
+                const Divider(),
+
+                ...itemOptions.map((opt) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: TextField(
+                              readOnly: true,
+                              controller:
+                                  TextEditingController(text: opt['name']),
+                              decoration: const InputDecoration(
+                                labelText: "Sub Item",
+                                labelStyle: TextStyle(fontFamily: "Oswald"),
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              readOnly: true,
+                              controller:
+                                  TextEditingController(text: opt['price']),
+                              decoration: const InputDecoration(
+                                labelText: "Price (RM)",
+                                prefixText: "RM ",
+                                labelStyle: TextStyle(fontFamily: "Oswald"),
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     )),
-                TextField(
-                  controller: optionNameController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: InputDecoration(labelText: 'Sub Item Name'),
+
+                // ➕ Inline pending input
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: subItemNameController,
+                          onChanged: (val) => setState(() {}),
+                          textCapitalization: TextCapitalization.words,
+                          decoration: const InputDecoration(
+                            labelText: "Sub Item",
+                            labelStyle: TextStyle(fontFamily: "Oswald"),
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: subItemPriceController,
+                          onChanged: (val) => setState(() {}),
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: "Price (RM)",
+                            prefixText: "RM ",
+                            labelStyle: TextStyle(fontFamily: "Oswald"),
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      if (!isPendingRowActive())
+                        const SizedBox(width: 42) // space holder
+                      else
+                        SizedBox(
+                          width: 42,
+                          height: 42,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              final name = subItemNameController.text.trim();
+                              final price = subItemPriceController.text.trim();
+
+                              final nameError =
+                                  InventoryValidators.validateOptionName(name);
+                              final priceError =
+                                  InventoryValidators.validatePrice(price);
+
+                              if (nameError != null || priceError != null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(nameError ??
+                                          priceError ??
+                                          "Invalid sub item")),
+                                );
+                                return;
+                              }
+
+                              setState(() {
+                                itemOptions.add({
+                                  'name': capitalizeEachWord(name),
+                                  'price': price,
+                                });
+                                subItemNameController.clear();
+                                subItemPriceController.clear();
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              backgroundColor: const Color(0xFF00B25D),
+                            ),
+                            child: const Icon(Icons.add, size: 22, color: Colors.black),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-                TextField(
-                  controller: optionPriceController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: 'Sub Item Price'),
+
+                const SizedBox(height: 24),
+
+                // Save All Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final name = itemController.text.trim();
+                      final nameError =
+                          InventoryValidators.validateItemName(name);
+
+                      if (nameError != null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(nameError)),
+                        );
+                        return;
+                      }
+
+                      if (itemOptions.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Add at least one sub item.")),
+                        );
+                        return;
+                      }
+
+                      final options = itemOptions
+                          .map((e) => {
+                                'name': e['name'],
+                                'price':
+                                    double.tryParse(e['price'] ?? '0') ?? 0.0,
+                              })
+                          .toList();
+
+                      await onSave(capitalizeEachWord(name), category, options);
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF007A50),
+                    ),
+                    child: const Text(
+                      "Save All",
+                      style: TextStyle(
+                        fontFamily: "Oswald",
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                final name = optionNameController.text.trim();
-                final price = optionPriceController.text.trim();
-
-                final nameError = InventoryValidators.validateOptionName(name);
-                final priceError = InventoryValidators.validatePrice(price);
-
-                if (nameError != null || priceError != null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content:
-                            Text(nameError ?? priceError ?? "Invalid input")),
-                  );
-                  return;
-                }
-
-                setState(() {
-                  itemOptions.add({
-                    'name': capitalizeEachWord(name),
-                    'price': price,
-                  });
-                  optionNameController.clear();
-                  optionPriceController.clear();
-                });
-              },
-              child: Text('Add Sub Item'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final name = itemController.text.trim();
-                final nameError = InventoryValidators.validateItemName(name);
-
-                if (nameError != null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(nameError)),
-                  );
-                  return;
-                }
-
-                if (itemOptions.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text("Please add at least one sub item.")),
-                  );
-                  return;
-                }
-
-                final options = itemOptions
-                    .map((e) => {
-                          'name': e['name'],
-                          'price': double.tryParse(e['price'] ?? '0') ?? 0.0,
-                        })
-                    .toList();
-
-                await onSave(capitalizeEachWord(name), category, options);
-                Navigator.pop(context);
-              },
-              child: Text('Save All'),
-            ),
-          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
+
+
+
 
 // ⚙️ Edit Item Popup
-  static void showEditItemPopup({
-    required BuildContext context,
-    required String initialName,
-    required String initialCategory,
-    required List<Map<String, dynamic>> itemOptions,
-    required OnSaveItem onSave,
-    required OnDeleteItem onDelete,
-  }) {
-    final itemNameController = TextEditingController(text: initialName);
-    String selectedCategory = initialCategory;
+static void showEditItemPopup({
+  required BuildContext context,
+  required String initialName,
+  required String initialCategory,
+  required List<Map<String, dynamic>> itemOptions,
+  required OnSaveItem onSave,
+  required OnDeleteItem onDelete,
+}) {
+  final itemNameController = TextEditingController(text: initialName);
+  String selectedCategory = initialCategory;
 
-    String capitalizeEachWord(String text) {
-      return text
-          .split(' ')
-          .map((word) => word.isEmpty
-              ? ''
-              : word[0].toUpperCase() + word.substring(1).toLowerCase())
-          .join(' ');
-    }
+  final nameControllers = itemOptions
+      .map((opt) => TextEditingController(text: opt['name']))
+      .toList();
 
-    // Syncing controllers
-    final nameControllers = itemOptions
-        .map((opt) => TextEditingController(text: opt['name']))
-        .toList();
+  final priceControllers = itemOptions
+      .map((opt) => TextEditingController(
+            text: (opt['price'] as num).toStringAsFixed(2),
+          ))
+      .toList();
 
-    final priceControllers = itemOptions
-        .map((opt) => TextEditingController(
-              text: (opt['price'] as num).toStringAsFixed(2),
-            ))
-        .toList();
-
-    showDialog(
-      context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setState) {
-          void addOption() {
-            setState(() {
-              itemOptions.add({'name': '', 'price': 0.0});
-              nameControllers.add(TextEditingController());
-              priceControllers.add(TextEditingController());
-            });
-          }
-
-          return AlertDialog(
-            scrollable: true,
-            title: Text("Edit Item & Options"),
-            content: Column(
-              children: [
-                TextField(
-                  controller: itemNameController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: InputDecoration(labelText: "Item Name"),
-                ),
-                DropdownButton<String>(
-                  value: selectedCategory,
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() => selectedCategory = val);
-                    }
-                  },
-                  items: ["Services", "Products"]
-                      .map((cat) => DropdownMenuItem(
-                            value: cat,
-                            child: Text(cat),
-                          ))
-                      .toList(),
-                ),
-                Divider(),
-                ...itemOptions.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  return ListTile(
-                    title: TextField(
-                      controller: nameControllers[index],
-                      textCapitalization: TextCapitalization.words,
-                      decoration: InputDecoration(labelText: "Sub Item Name"),
-                    ),
-                    subtitle: TextField(
-                      controller: priceControllers[index],
-                      keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(labelText: "Price (RM)"),
-                    ),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.redAccent),
-                      onPressed: () {
-                        setState(() {
-                          itemOptions.removeAt(index);
-                          nameControllers.removeAt(index);
-                          priceControllers.removeAt(index);
-                        });
-                      },
-                    ),
-                  );
-                }),
-                TextButton.icon(
-                  onPressed: addOption,
-                  icon: Icon(Icons.add),
-                  label: Text("Add Sub Item"),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () async {
-                  await onDelete();
-                  Navigator.pop(context);
-                },
-                child: Text("Delete Item", style: TextStyle(color: Colors.red)),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  final name = itemNameController.text.trim();
-                  final nameError = InventoryValidators.validateItemName(name);
-
-                  if (nameError != null) {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(SnackBar(content: Text(nameError)));
-                    return;
-                  }
-
-                  if (itemOptions.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content:
-                              Text("Please include at least one sub item.")),
-                    );
-                    return;
-                  }
-
-                  // Sync controller data back into itemOptions and validate
-                  for (int i = 0; i < itemOptions.length; i++) {
-                    final subName = nameControllers[i].text.trim();
-                    final subPrice = priceControllers[i].text.trim();
-
-                    final nameError =
-                        InventoryValidators.validateOptionName(subName);
-                    final priceError =
-                        InventoryValidators.validatePrice(subPrice);
-
-                    if (nameError != null || priceError != null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(
-                                nameError ?? priceError ?? "Invalid input")),
-                      );
-                      return;
-                    }
-
-                    itemOptions[i]['name'] = capitalizeEachWord(subName);
-                    itemOptions[i]['price'] = double.tryParse(subPrice) ?? 0.0;
-                  }
-
-                  await onSave(
-                    capitalizeEachWord(name),
-                    selectedCategory,
-                    itemOptions,
-                  );
-                  Navigator.pop(context);
-                },
-                child: Text("Save Changes"),
-              ),
-            ],
-          );
-        },
-      ),
-    );
+  String capitalizeEachWord(String text) {
+    return text
+        .split(' ')
+        .map((word) => word.isEmpty
+            ? ''
+            : word[0].toUpperCase() + word.substring(1).toLowerCase())
+        .join(' ');
   }
+
+  showDialog(
+    context: context,
+    builder: (_) => StatefulBuilder(
+      builder: (context, setState) {
+        void addOption() {
+          setState(() {
+            itemOptions.add({'name': '', 'price': 0.0});
+            nameControllers.add(TextEditingController());
+            priceControllers.add(TextEditingController());
+          });
+        }
+
+        return Dialog(
+          backgroundColor: const Color(0xFFFDF7F0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+            side: const BorderSide(color: Color(0xFF00B25D), width: 4),
+          ),
+          child: Container(
+            width: 500,
+            padding: const EdgeInsets.all(24),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const Text(
+                    "Edit Item & Options",
+                    style: TextStyle(
+                      fontFamily: "Oswald",
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Item Name
+                  TextField(
+                    controller: itemNameController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(
+                      labelText: "Item Name",
+                      labelStyle: TextStyle(fontFamily: "Oswald"),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Category
+                  DropdownButtonFormField<String>(
+                    value: selectedCategory,
+                    decoration: const InputDecoration(
+                      labelText: "Category",
+                      labelStyle: TextStyle(fontFamily: "Oswald"),
+                      border: OutlineInputBorder(),
+                    ),
+                    items: ["Services", "Products"]
+                        .map((cat) => DropdownMenuItem(
+                              value: cat,
+                              child: Text(cat),
+                            ))
+                        .toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => selectedCategory = val);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  const Divider(),
+
+                  ...itemOptions.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    return Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: TextField(
+                                controller: nameControllers[index],
+                                textCapitalization: TextCapitalization.words,
+                                decoration: const InputDecoration(
+                                  labelText: "Sub Item",
+                                  labelStyle: TextStyle(fontFamily: "Oswald"),
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: priceControllers[index],
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                decoration: const InputDecoration(
+                                  labelText: "Price (RM)",
+                                  labelStyle: TextStyle(fontFamily: "Oswald"),
+                                  border: OutlineInputBorder(),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.redAccent),
+                              onPressed: () {
+                                setState(() {
+                                  itemOptions.removeAt(index);
+                                  nameControllers.removeAt(index);
+                                  priceControllers.removeAt(index);
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    );
+                  }),
+
+                  TextButton.icon(
+                    onPressed: addOption,
+                    icon: const Icon(Icons.add),
+                    label: const Text("Add Sub Item",
+                        style: TextStyle(fontFamily: "Oswald")),
+                  ),
+                  const SizedBox(height: 10),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                backgroundColor: const Color(0xFF46303C),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                title: const Text(
+                                  "Delete Item",
+                                  style: TextStyle(
+                                    fontFamily: "Oswald",
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                content: const Text(
+                                  "Are you sure you want to delete this item?",
+                                  style: TextStyle(
+                                    fontFamily: "Oswald",
+                                    fontSize: 18,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text("Cancel",
+                                        style: TextStyle(
+                                            fontFamily: "Oswald",
+                                            color: Colors.white)),
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      Navigator.pop(context); // confirm
+                                      Navigator.pop(context); // dialog
+                                      await onDelete();
+                                    },
+                                    child: const Text("Delete",
+                                        style: TextStyle(
+                                            fontFamily: "Oswald",
+                                            color: Colors.red,
+                                            fontWeight: FontWeight.bold)),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade700,
+                          ),
+                          child: const Text(
+                            "Delete Item",
+                            style: TextStyle(
+                              fontFamily: "Oswald",
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final name = itemNameController.text.trim();
+                            final nameError = InventoryValidators.validateItemName(name);
+                            if (nameError != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(nameError)),
+                              );
+                              return;
+                            }
+
+                            if (itemOptions.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Include at least one sub item.")),
+                              );
+                              return;
+                            }
+
+                            for (int i = 0; i < itemOptions.length; i++) {
+                              final subName = nameControllers[i].text.trim();
+                              final subPrice = priceControllers[i].text.trim();
+
+                              final nameError = InventoryValidators.validateOptionName(subName);
+                              final priceError = InventoryValidators.validatePrice(subPrice);
+
+                              if (nameError != null || priceError != null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          nameError ?? priceError ?? "Invalid input")),
+                                );
+                                return;
+                              }
+
+                              itemOptions[i]['name'] = capitalizeEachWord(subName);
+                              itemOptions[i]['price'] =
+                                  double.tryParse(subPrice) ?? 0.0;
+                            }
+
+                            await onSave(
+                              capitalizeEachWord(name),
+                              selectedCategory,
+                              itemOptions,
+                            );
+                            Navigator.pop(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF00A163),
+                          ),
+                          child: const Text(
+                            "Save Changes",
+                            style: TextStyle(
+                              fontFamily: "Oswald",
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    ),
+  );
+}
+
 }

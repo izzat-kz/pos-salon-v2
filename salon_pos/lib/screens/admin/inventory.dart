@@ -3,6 +3,7 @@ import '../../styles/text_styles.dart';
 import '../../widgets/left_sidebar.dart';
 import '../../widgets/admin/popups.dart';
 import '../../services/admin/inv_crud.dart';
+import 'package:dotted_border/dotted_border.dart';
 
 class InventoryScreen extends StatefulWidget {
   @override
@@ -69,7 +70,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final int columns = 4;
+    final int columns = 5;
 
     return Scaffold(
       backgroundColor: Color(0xFFD5D5D5),
@@ -113,23 +114,24 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     children: [
                       GestureDetector(
                         onTap: _openAddPopup,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.transparent,
-                            border: Border.all(
-                              color: Colors.black45,
-                              style: BorderStyle.solid,
-                              width: 3,
+                        child: DottedBorder(
+                          color: Colors.grey.shade700,
+                          strokeWidth: 3,
+                          borderType: BorderType.RRect,
+                          radius: const Radius.circular(12),
+                          dashPattern: [8, 6],
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Center(
+                            alignment: Alignment.center,
                             child: Text(
                               '+',
                               style: TextStyle(
                                 fontSize: 60,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black45,
+                                color: Colors.grey.shade700,
                               ),
                             ),
                           ),
@@ -145,7 +147,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
                             elevation: 5,
                             color: Color(0xFF3F3E3A),
                             child: Padding(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
                               child: Center(
                                 child: Text(
                                   item['name'],
