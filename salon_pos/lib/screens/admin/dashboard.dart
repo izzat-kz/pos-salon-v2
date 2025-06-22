@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../login.dart';
 import 'inventory.dart';
-import '../../widgets/popups.dart';
+import 'sales_report.dart';
 import 'staff_management.dart';
+import '../../widgets/popups.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
@@ -37,6 +38,18 @@ class AdminDashboard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _dashboardButton(
+                        label: "SALES\nREPORT",
+                        icon: Icons.monetization_on,
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => SalesReportScreen()),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 70),
+                      _dashboardButton(
                         label: "MANAGE\nINVENTORY",
                         icon: Icons.inventory_2_rounded,
                         onPressed: () {
@@ -62,6 +75,8 @@ class AdminDashboard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 60),
+
+                  
                   ElevatedButton(
                     onPressed: () => popupLogoutConfirmation(context),
                     style: ElevatedButton.styleFrom(

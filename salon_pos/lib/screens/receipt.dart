@@ -1,35 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'dart:io';
 import '../models/item_catalog.dart';
 import 'menu.dart';
 import '../services/receipt_service.dart';
 import '../utils/session.dart';
 
+
 class ReceiptScreen extends StatelessWidget {
   final Map<Item, int> bill;
   final double subtotal;
+  final int customerPax;
+  final bool isLoanTransaction;
 
-  ReceiptScreen({required this.bill, required this.subtotal});
+  ReceiptScreen({
+    required this.bill,
+    required this.subtotal,
+    required this.customerPax,
+    this.isLoanTransaction = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final formattedDate =
+        DateFormat("dd/MM/yyyy  hh:mm:ss a").format(DateTime.now());
+
     return Scaffold(
-      backgroundColor: Color(0xFFD5D5D5),
+      backgroundColor: const Color(0xFFD5D5D5),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
             width: 400,
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Color(0xFF46303C),
+              color: const Color(0xFF46303C),
               borderRadius: BorderRadius.circular(15),
             ),
             child: Column(
               children: [
                 Text(
                   "Receipt Summary",
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: "Oswald",
                     fontSize: 30,
                     fontWeight: FontWeight.bold,
@@ -40,13 +52,38 @@ class ReceiptScreen extends StatelessWidget {
                 if (Session.currentStaff != null)
                   Text(
                     "Served by: ${Session.currentStaff!.name} (ID: ${Session.currentStaff!.id})",
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontFamily: "Oswald",
                       fontSize: 14,
                       color: Colors.white70,
                     ),
                   ),
-                Divider(thickness: 2, color: Colors.white),
+                Text(
+                  "Customer Pax: $customerPax",
+                  style: const TextStyle(
+                    fontFamily: "Oswald",
+                    fontSize: 14,
+                    color: Colors.white70,
+                  ),
+                ),
+                if (isLoanTransaction)
+                  Text(
+                    "Payment Method: Loan Settlement",
+                    style: const TextStyle(
+                      fontFamily: "Oswald",
+                      fontSize: 14,
+                      color: Colors.white70,
+                    ),
+                  ),
+                Text(
+                  "Date: $formattedDate",
+                  style: const TextStyle(
+                    fontFamily: "Oswald",
+                    fontSize: 14,
+                    color: Colors.white70,
+                  ),
+                ),
+                const Divider(thickness: 2, color: Colors.white),
                 ...bill.entries.map((entry) {
                   final item = entry.key;
                   final qty = entry.value;
@@ -57,7 +94,6 @@ class ReceiptScreen extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Item type + option name
                         Expanded(
                           flex: 4,
                           child: Text(
@@ -69,8 +105,6 @@ class ReceiptScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-
-                        // Quantity
                         Expanded(
                           flex: 1,
                           child: Text(
@@ -83,8 +117,6 @@ class ReceiptScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-
-                        // Price
                         Expanded(
                           flex: 2,
                           child: Text(
@@ -101,43 +133,49 @@ class ReceiptScreen extends StatelessWidget {
                     ),
                   );
                 }).toList(),
-                Divider(thickness: 2, color: Colors.white),
+                const Divider(thickness: 2, color: Colors.white),
                 Text(
                   "Total: RM ${subtotal.toStringAsFixed(2)}",
-                  style: TextStyle(
-                      fontFamily: "Oswald",
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
+                  style: const TextStyle(
+                    fontFamily: "Oswald",
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-                SizedBox(height: 10),
-                Text(
+                const SizedBox(height: 10),
+                const Text(
                   "THANK YOU & PLEASE COME AGAIN!",
                   style: TextStyle(
-                      fontFamily: "Oswald", fontSize: 18, color: Colors.white),
+                    fontFamily: "Oswald",
+                    fontSize: 18,
+                    color: Colors.white,
+                  ),
                 ),
               ],
             ),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ElevatedButton(
                 onPressed: () => ReceiptService.printReceipt(bill, subtotal),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFEF3A5D),
+                  backgroundColor: const Color(0xFFEF3A5D),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  minimumSize: Size(140, 50),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  minimumSize: const Size(140, 50),
                 ),
-                child: Text("PRINT",
+                child: const Text("PRINT",
                     style: TextStyle(
-                        fontSize: 18,
-                        fontFamily: "Oswald",
-                        color: Colors.white)),
+                      fontSize: 18,
+                      fontFamily: "Oswald",
+                      color: Colors.white,
+                    )),
               ),
-              SizedBox(width: 20),
+              const SizedBox(width: 20),
               ElevatedButton(
                 onPressed: () {
                   bill.clear();
@@ -149,14 +187,16 @@ class ReceiptScreen extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.yellow.shade600,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  minimumSize: Size(140, 50),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  minimumSize: const Size(140, 50),
                 ),
-                child: Text("DONE",
+                child: const Text("DONE",
                     style: TextStyle(
-                        fontSize: 18,
-                        fontFamily: "Oswald",
-                        color: Colors.black)),
+                      fontSize: 18,
+                      fontFamily: "Oswald",
+                      color: Colors.black,
+                    )),
               ),
             ],
           ),

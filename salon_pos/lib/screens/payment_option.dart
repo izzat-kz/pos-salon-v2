@@ -6,11 +6,13 @@ import '../styles/button_styles.dart';
 class PaymentOptionsScreen extends StatelessWidget {
   final double totalAmount;
   final Map<Item, int> bill;
+  final int customerPax;
 
   const PaymentOptionsScreen({
     Key? key,
     required this.totalAmount,
     required this.bill,
+    required this.customerPax,
   }) : super(key: key);
 
   @override
@@ -56,6 +58,7 @@ class PaymentOptionsScreen extends StatelessWidget {
                                 totalAmount: totalAmount,
                                 bill: bill,
                                 paymentMethod: 'cash',
+                                customerPax: customerPax,
                               ),
                             ),
                           );
@@ -72,6 +75,7 @@ class PaymentOptionsScreen extends StatelessWidget {
                                 totalAmount: totalAmount,
                                 bill: bill,
                                 paymentMethod: 'loan',
+                                customerPax: customerPax,
                               ),
                             ),
                           );

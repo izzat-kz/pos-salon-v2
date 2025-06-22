@@ -41,7 +41,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     showAddStaffPopup(
       context: context,
       nextId: nextId,
-      onSaved: _loadStaff, // reload staff list after save
+      onSaved: _loadStaff, // to reload staff list after save
     );
   }
 
@@ -130,13 +130,13 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                         children: [
                                           Text(
                                             staff.name,
-                                            style: AppTextStyles.subtitle2
+                                            style: AppTextStyles.subtitleMedium
                                                 .copyWith(color: Colors.white),
                                           ),
                                           const SizedBox(height: 3),
                                           Text(
                                             "Staff ID: ${staff.id}",
-                                            style: AppTextStyles.subtitle
+                                            style: AppTextStyles.subtitleSmall
                                                 .copyWith(
                                                     color: Colors.white70),
                                           ),

@@ -49,6 +49,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
     InventoryPopups.showEditItemPopup(
       context: context,
+      itemId: itemId,
       initialName: item['name'],
       initialCategory: item['category'],
       itemOptions: itemOptions,

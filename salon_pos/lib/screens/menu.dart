@@ -75,9 +75,6 @@ class _MenuScreenState extends State<MenuScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // final currentStaff = Session.currentStaff;
-    // final bill = BillService.bill.entries.toList().reversed.toList();
-
     return Scaffold(
       backgroundColor: Color(0xFFD5D5D5),
       body: Row(
@@ -91,15 +88,7 @@ class _MenuScreenState extends State<MenuScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // const SizedBox(height: 6),
-                // Padding(
-                //   padding: const EdgeInsets.only(left: 16.0),
-                //   child: Session.currentStaff != null
-                //       ? StaffBadge(staff: Session.currentStaff!)
-                //       : SizedBox.shrink(),
-                // ),
                 const SizedBox(height: 24),
-
                 Center(
                   child: ToggleButtons(
                     isSelected: [showServices, !showServices],
@@ -173,7 +162,7 @@ class _MenuScreenState extends State<MenuScreen> {
             margin: EdgeInsets.symmetric(vertical: 12),
           ),
 
-          // ⏹️ BILLS PANEL (Grouped by item_type)
+          // ⏹️ BILLS PANEL
           Container(
             width: 350,
             color: Color(0xFFD5D5D5),
@@ -331,17 +320,29 @@ class _MenuScreenState extends State<MenuScreen> {
                         ElevatedButton(
                           onPressed: () {
                             if (isBillEmpty(BillService.bill)) {
-                              popupEmtpyBill(context, "Bill Is Empty",
-                                  "Please add something before proceeding.");
-                            } else {
-                              Navigator.push(
+                              popupEmtpyBill(
                                 context,
-                                MaterialPageRoute(
-                                  builder: (context) => PaymentOptionsScreen(
-                                    totalAmount:
-                                        BillService.calculateSubtotal(),
-                                    bill: BillService.bill,
-                                  ),
+                                "Bill Is Empty",
+                                "Please add something before proceeding.",
+                              );
+                            } else {
+                              showDialog(
+                                context: context,
+                                builder: (_) => CustomerPaxPopup(
+                                  onConfirm: (pax) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            PaymentOptionsScreen(
+                                          totalAmount:
+                                              BillService.calculateSubtotal(),
+                                          bill: BillService.bill,
+                                          customerPax: pax,
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               );
                             }

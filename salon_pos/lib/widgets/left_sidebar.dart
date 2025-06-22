@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:salon_pos/screens/menu.dart';
 import '../screens/loan_list.dart';
 import '../screens/admin/dashboard.dart';
+import '../screens/booking_page.dart';
 import '../styles/button_styles.dart';
 import '../styles/text_styles.dart';
 import 'popups.dart';
@@ -11,8 +12,13 @@ import 'staff_badge.dart';
 class LeftSidebar extends StatelessWidget {
   final bool isLoanListScreen;
   final bool isAdmin;
+  final bool isBookingScreen;
 
-  const LeftSidebar({this.isLoanListScreen = false, this.isAdmin = false});
+  const LeftSidebar({
+    this.isLoanListScreen = false,
+    this.isAdmin = false,
+    this.isBookingScreen = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +72,30 @@ class LeftSidebar extends StatelessWidget {
                 style: AppButtonStyles.navButton,
                 child: Text(
                   isLoanListScreen ? "Home" : "Loan List",
+                  style: AppTextStyles.navText,
+                ),
+              ),
+            ),
+          if (!isAdmin)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  if (isBookingScreen) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => MenuScreen()),
+                    );
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => BookingPage()),
+                    );
+                  }
+                },
+                style: AppButtonStyles.navButton,
+                child: Text(
+                  isBookingScreen ? "Home" : "Booking",
                   style: AppTextStyles.navText,
                 ),
               ),

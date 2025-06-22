@@ -8,6 +8,109 @@ import '../models/loan_model.dart';
 import '../services/loan_crud.dart';
 import '../screens/transaction.dart';
 import '../screens/login.dart';
+import '../services/sales_crud.dart';
+import '../models/sales_model.dart';
+import '../utils/session.dart';
+import '../services/db_helper.dart';
+import 'enter_payment_popup.dart';
+import 'payment_history_popup.dart';
+import '../models/loan_payment.dart';
+import '../services/loan_payment_crud.dart';
+
+/// 📌 **Customer Pax Popups**
+class CustomerPaxPopup extends StatefulWidget {
+  final Function(int pax) onConfirm;
+
+  const CustomerPaxPopup({required this.onConfirm});
+
+  @override
+  _CustomerPaxPopupState createState() => _CustomerPaxPopupState();
+}
+
+class _CustomerPaxPopupState extends State<CustomerPaxPopup> {
+  int selectedPax = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: const Color(0xFF46303C),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        width: 400,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Number of Customers",
+              style: TextStyle(
+                fontFamily: "Oswald",
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              height: 120,
+              child: ListWheelScrollView.useDelegate(
+                itemExtent: 40,
+                diameterRatio: 1.3,
+                onSelectedItemChanged: (index) {
+                  setState(() {
+                    selectedPax = index + 1;
+                  });
+                },
+                physics: FixedExtentScrollPhysics(),
+                perspective: 0.003,
+                childDelegate: ListWheelChildBuilderDelegate(
+                  childCount: 10,
+                  builder: (context, index) => Center(
+                    child: Text(
+                      "${index + 1}",
+                      style: const TextStyle(
+                        fontSize: 22,
+                        color: Colors.white70,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Align(
+              alignment: Alignment.bottomRight,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  widget.onConfirm(selectedPax);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFDCB6E),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Text(
+                    "Confirm",
+                    style: TextStyle(
+                      fontFamily: "Oswald",
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 /// 📌 **Unified Validation Error Popup (Matching UI)**
 void popupValidationErrors(BuildContext context, List<String> errors) {
@@ -107,16 +210,20 @@ void popupTransactionError(BuildContext context, String title, String message) {
   );
 }
 
-/// 📌 **Popup for Change Due**
+/// 📌 **Popup for Change Due - Successful Transaction**
 void popupChangeDue(
-    BuildContext context,
-    String title,
-    String message,
-    String action,
-    Map<Item, int> bill,
-    double totalAmount,
-    bool isLoanTransaction,
-    Loan? selectedLoan) {
+  BuildContext context,
+  String title,
+  String message,
+  String action,
+  Map<Item, int> bill,
+  double totalAmount,
+  bool isLoanTransaction,
+  Loan? selectedLoan,
+  int customerPax, {
+  bool shouldRemoveLoan =
+      false, // Only true when called from "Clear Loan" or max payment
+}) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -127,16 +234,18 @@ void popupChangeDue(
         ),
         title: Text(title,
             style: TextStyle(
-                fontFamily: "Oswald",
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Colors.white)),
+              fontFamily: "Oswald",
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            )),
         content: Text(message,
             style: TextStyle(
-                fontFamily: "Oswald",
-                fontSize: 65,
-                fontWeight: FontWeight.bold,
-                color: Colors.white)),
+              fontFamily: "Oswald",
+              fontSize: 65,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            )),
         actions: [
           TextButton(
             style: TextButton.styleFrom(
@@ -145,11 +254,35 @@ void popupChangeDue(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            onPressed: () {
+            onPressed: () async {
+              final sale = SalesReport(
+                billId: DateTime.now().millisecondsSinceEpoch,
+                date: DateTime.now().toIso8601String(),
+                totalAmount: totalAmount,
+                pax: customerPax,
+                staffId: Session.currentStaff!.id,
+              );
+              await SalesService.insertSale(sale);
+
+              if (isLoanTransaction &&
+                  selectedLoan != null &&
+                  !shouldRemoveLoan) {
+                await LoanPaymentService.insertPayment(
+                  LoanPayment(
+                    id: 0,
+                    loanId: selectedLoan.id,
+                    amountPaid: totalAmount,
+                    paymentDate: DateTime.now().toIso8601String(),
+                  ),
+                );
+              }
+
               Navigator.pop(context);
 
-              if (isLoanTransaction && selectedLoan != null) {
-                LoanService.removeLoan(selectedLoan.id);
+              if (isLoanTransaction &&
+                  selectedLoan != null &&
+                  shouldRemoveLoan) {
+                await LoanService.removeLoan(selectedLoan.id);
               }
 
               Navigator.push(
@@ -158,16 +291,18 @@ void popupChangeDue(
                   builder: (context) => ReceiptScreen(
                     bill: bill,
                     subtotal: totalAmount,
+                    customerPax: customerPax,
                   ),
                 ),
               );
             },
             child: Text("RECEIPT",
                 style: TextStyle(
-                    fontFamily: "Oswald",
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white)),
+                  fontFamily: "Oswald",
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                )),
           ),
         ],
       );
@@ -263,7 +398,7 @@ void popupLogoutConfirmation(BuildContext context) {
               ),
             ),
             onPressed: () {
-              Navigator.pop(context); // Close dialog
+              Navigator.pop(context);
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (_) => LoginPage()),
@@ -281,6 +416,43 @@ void popupLogoutConfirmation(BuildContext context) {
       );
     },
   );
+}
+
+// ⚙️ Async helper to convert stored loan item IDs into actual Item objects
+Future<Map<Item, int>> convertLoanToBill(Loan loan) async {
+  final db = await DBHelper().database;
+
+  final entries = await Future.wait(
+    loan.billItems.entries.map((entry) async {
+      final int subId = int.tryParse(entry.key.toString()) ?? -1;
+
+      final itemOption = await db.query(
+        'item_option',
+        where: 'sub_id = ?',
+        whereArgs: [subId],
+      );
+
+      final itemType = await db.query(
+        'item_type',
+        where: 'item_id = ?',
+        whereArgs: [itemOption.first['item_id']],
+      );
+
+      final item = Item(
+        id: subId,
+        name: "${itemType.first['name']} - ${itemOption.first['name']}",
+        price: (itemOption.first['price'] as num?)?.toDouble() ?? 0.0,
+        parentItemName: itemType.first['name'] as String,
+        category: itemType.first['category'] == "Services"
+            ? ItemCategory.service
+            : ItemCategory.product,
+      );
+
+      return MapEntry(item, entry.value);
+    }),
+  );
+
+  return Map<Item, int>.fromEntries(entries);
 }
 
 /// 📌 **Popup for Successfull Loan Submission**
@@ -330,7 +502,8 @@ void showLoanSuccessPopup(BuildContext context, VoidCallback onConfirmed) {
 }
 
 /// 📌 **Popup for Loan Details**
-void showLoanDetailsPopup(BuildContext context, Loan loan) {
+void showLoanDetailsPopup(
+    BuildContext context, List<String> loanedItems, Loan loan) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -360,28 +533,41 @@ void showLoanDetailsPopup(BuildContext context, Loan loan) {
                       fontSize: 16,
                       fontFamily: "Oswald",
                       color: Colors.grey[900])),
+              SizedBox(height: 3),
+              Text("Customer pax: ${loan.customerPax}",
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontFamily: "Oswald",
+                      color: Colors.grey[900])),
               SizedBox(height: 10),
               Text("Name:        ${loan.name}",
                   style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: "Oswald",
+                      color: Colors.grey[900])),
+              SizedBox(height: 7),
+              Text("IC Num:     ${loan.icNumber}",
+                  style: TextStyle(
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       fontFamily: "Oswald",
                       color: Colors.grey[900])),
               SizedBox(height: 7),
               Text("Phone:       ${loan.phone}",
                   style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       fontFamily: "Oswald",
                       color: Colors.grey[900])),
               SizedBox(height: 7),
               Text("Address:    ${loan.address}",
                   style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       fontFamily: "Oswald",
                       color: Colors.grey[900])),
-              SizedBox(height: 50),
+              SizedBox(height: 10),
               Divider(color: Colors.grey[900], thickness: 2.0),
               SizedBox(height: 10),
 
@@ -390,33 +576,43 @@ void showLoanDetailsPopup(BuildContext context, Loan loan) {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.20,
-                    child: Table(
-                      columnWidths: {
-                        0: FlexColumnWidth(4),
-                        1: FlexColumnWidth(1),
-                      },
-                      children: [
-                        TableRow(children: [
-                          Text("",
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  fontFamily: "Oswald",
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey[900])),
-                          Text("",
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  fontFamily: "Oswald",
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey[900])),
-                        ]),
-                        ...loan.billItems.entries.map((entry) {
+                    width: MediaQuery.of(context).size.width * 0.25,
+                    child: FutureBuilder<List<TableRow>>(
+                      future: Future.wait(
+                        loan.billItems.entries.map((entry) async {
+                          final db = await DBHelper().database;
+
+                          // ⚙️ Fetch item type and option details
+                          final List<Map<String, dynamic>> itemOption =
+                              await db.query(
+                            'item_option',
+                            where: 'sub_id = ?',
+                            whereArgs: [entry.key],
+                          );
+
+                          final List<Map<String, dynamic>> itemType =
+                              await db.query(
+                            'item_type',
+                            where: 'item_id = ?',
+                            whereArgs: [
+                              itemOption.isNotEmpty
+                                  ? itemOption.first['item_id']
+                                  : 0
+                            ],
+                          );
+
+                          final itemName = itemType.isNotEmpty
+                              ? itemType.first['name']
+                              : 'Unknown Type';
+                          final optionName = itemOption.isNotEmpty
+                              ? itemOption.first['name']
+                              : 'Unknown Option';
+
                           return TableRow(children: [
                             Padding(
                               padding:
                                   const EdgeInsets.symmetric(vertical: 6.0),
-                              child: Text(entry.key,
+                              child: Text("$itemName - $optionName",
                                   style: TextStyle(
                                       fontSize: 18,
                                       fontFamily: "Oswald",
@@ -433,7 +629,23 @@ void showLoanDetailsPopup(BuildContext context, Loan loan) {
                             ),
                           ]);
                         }).toList(),
-                      ],
+                      ),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(child: CircularProgressIndicator());
+                        }
+                        if (snapshot.hasError) {
+                          return Center(child: Text("Error loading items"));
+                        }
+                        return Table(
+                          columnWidths: {
+                            0: FlexColumnWidth(4),
+                            1: FlexColumnWidth(1),
+                          },
+                          children: snapshot.data!,
+                        );
+                      },
                     ),
                   ),
 
@@ -447,12 +659,20 @@ void showLoanDetailsPopup(BuildContext context, Loan loan) {
                                 fontSize: 18,
                                 fontFamily: "Oswald",
                                 color: Colors.grey[900])),
-                        Text("RM ${loan.totalAmount.toStringAsFixed(2)}",
-                            style: TextStyle(
-                                fontSize: 85,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: "Oswald",
-                                color: Colors.red)),
+                        FutureBuilder<double>(
+                          future: LoanPaymentService.getTotalPaid(loan.id),
+                          builder: (context, snapshot) {
+                            final totalPaid = snapshot.data ?? 0.0;
+                            final remaining = loan.totalAmount - totalPaid;
+
+                            return Text("RM ${remaining.toStringAsFixed(2)}",
+                                style: TextStyle(
+                                    fontSize: 85,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: "Oswald",
+                                    color: Colors.red));
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -460,82 +680,204 @@ void showLoanDetailsPopup(BuildContext context, Loan loan) {
               ),
               SizedBox(height: 20),
 
-              // ⏹️ Action Buttons (Back & Clear Loan)
+              // ⏹️ Action Buttons
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Payment History Button
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context);
+                      showDialog(
+                        context: context,
+                        builder: (_) => PaymentHistoryPopup(loanId: loan.id),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[900],
+                      backgroundColor: Colors.blueGrey[800],
                       padding:
-                          EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                          EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    child: Text("Back",
+                    child: Text("History Payment",
                         style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontFamily: "Oswald",
+                            fontWeight: FontWeight.bold,
                             color: Colors.white)),
                   ),
-                  SizedBox(width: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF87CB28), Color(0xFF00732D)],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
+
+                  Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[900],
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 32, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: Text("Back",
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: "Oswald",
+                                color: Colors.white)),
                       ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final entries = await Future.wait(
-                          loan.billItems.entries.map((entry) async {
-                            final item =
-                                await ItemCatalog.getItemByName(entry.key);
-                            if (item != null) {
+                      const SizedBox(width: 12),
+                      // Enter Payment Button
+                      ElevatedButton(
+                        onPressed: () async {
+                          // ⚙️ Rebuild Bill & Calculate Remaining Before Showing Popup
+                          final db = await DBHelper().database;
+
+                          final totalPaid =
+                              await LoanPaymentService.getTotalPaid(loan.id);
+                          final remainingBalance = loan.totalAmount - totalPaid;
+
+                          final entries = await Future.wait(
+                            loan.billItems.entries.map((entry) async {
+                              final int subId =
+                                  int.tryParse(entry.key.toString()) ?? -1;
+
+                              final itemOption = await db.query(
+                                'item_option',
+                                where: 'sub_id = ?',
+                                whereArgs: [subId],
+                              );
+                              final itemType = await db.query(
+                                'item_type',
+                                where: 'item_id = ?',
+                                whereArgs: [itemOption.first['item_id']],
+                              );
+
+                              final item = Item(
+                                id: subId,
+                                name:
+                                    "${itemType.first['name']} - ${itemOption.first['name']}",
+                                price: (itemOption.first['price'] as num?)
+                                        ?.toDouble() ??
+                                    0.0,
+                                parentItemName:
+                                    itemType.first['name'] as String,
+                                category:
+                                    itemType.first['category'] == "Services"
+                                        ? ItemCategory.service
+                                        : ItemCategory.product,
+                              );
+
                               return MapEntry(item, entry.value);
-                            } else {
-                              throw Exception("Item '${entry.key}' not found.");
-                            }
-                          }),
-                        );
+                            }),
+                          );
 
-                        final convertedBill =
-                            Map<Item, int>.fromEntries(entries);
+                          final convertedBill = Map<Item, int>.fromEntries(
+                            entries.map((e) => MapEntry(e.key, e.value)),
+                          );
 
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => TransactionScreen(
-                              totalAmount: loan.totalAmount,
-                              bill: convertedBill,
-                              paymentMethod: "cash",
-                              isLoanTransaction: true,
-                              selectedLoan: loan,
+                          showDialog(
+                            context: context,
+                            builder: (_) => EnterPaymentPopup(
+                              loan: loan,
+                              remainingBalance: remainingBalance,
+                              onPay: (amount) async {
+                                final totalPaidSoFar =
+                                    await LoanPaymentService.getTotalPaid(
+                                        loan.id);
+                                final remaining =
+                                    loan.totalAmount - totalPaidSoFar;
+                                final isFinalPayment = (amount >= remaining);
+
+                                final convertedBill =
+                                    await LoanService.convertLoanToBill(loan);
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => TransactionScreen(
+                                      bill: convertedBill,
+                                      totalAmount: amount,
+                                      paymentMethod: "cash",
+                                      isLoanTransaction: true,
+                                      selectedLoan: loan,
+                                      customerPax: loan.customerPax,
+                                      shouldRemoveLoan: isFinalPayment,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 65, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        shadowColor: Colors.transparent,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFFFDCB6E),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 26, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: Text("Enter Payment",
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: "Oswald",
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87)),
                       ),
-                      child: Text("Clear Loan",
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: "Oswald",
-                              color: Colors.white)),
-                    ),
+
+                      const SizedBox(width: 12),
+
+                      // Clear Loan Button (for Full Payment)
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF87CB28), Color(0xFF00732D)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final convertedBill = await convertLoanToBill(loan);
+                            final totalPaid =
+                                await LoanPaymentService.getTotalPaid(loan.id);
+                            final remainingAmount =
+                                loan.totalAmount - totalPaid;
+
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TransactionScreen(
+                                  totalAmount: remainingAmount,
+                                  bill: convertedBill,
+                                  paymentMethod: "cash",
+                                  isLoanTransaction: true,
+                                  selectedLoan: loan,
+                                  customerPax: loan.customerPax,
+                                  shouldRemoveLoan: true,
+                                ),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 38, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            shadowColor: Colors.transparent,
+                          ),
+                          child: Text("Clear Loan",
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontFamily: "Oswald",
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -711,31 +1053,122 @@ class SubItemPopup extends StatelessWidget {
   }
 }
 
+/// 📌 Popup for Deleting Booking Confirmation
+Future<bool?> showDeleteBookingPopup(BuildContext context) {
+  return showDialog<bool>(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        backgroundColor: Color(0xFF46303C),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        title: Text(
+          "Delete Booking",
+          style: TextStyle(
+            fontFamily: "Oswald",
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        content: Text(
+          "Are you sure you want to delete this booking?",
+          style: TextStyle(
+            fontFamily: "Oswald",
+            fontSize: 18,
+            color: Colors.white70,
+          ),
+        ),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.grey.shade700,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              "Cancel",
+              style: TextStyle(
+                fontFamily: "Oswald",
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: Color(0xFFEF3A5D),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              "Delete",
+              style: TextStyle(
+                fontFamily: "Oswald",
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
 
-// void popupAddedToBill(BuildContext context, String itemName) {
-//   showDialog(
-//     context: context,
-//     builder: (context) => AlertDialog(
-//       backgroundColor: const Color(0xFF46303C),
-//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//       title: const Text(
-//         "Item Added",
-//         style: TextStyle(
-//           color: Colors.white,
-//           fontFamily: 'Oswald',
-//           fontWeight: FontWeight.bold,
-//         ),
-//       ),
-//       content: Text(
-//         "$itemName has been added to the bill.",
-//         style: const TextStyle(color: Colors.white70),
-//       ),
-//       actions: [
-//         TextButton(
-//           onPressed: () => Navigator.pop(context),
-//           child: const Text("OK", style: TextStyle(color: Colors.pinkAccent)),
-//         ),
-//       ],
-//     ),
-//   );
-// }
+void showBookingSuccessPopup(BuildContext context, VoidCallback onConfirmed) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        backgroundColor: Colors.green,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        title: Text("Booking Confirmed!",
+            style: TextStyle(
+              fontFamily: "Oswald",
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            )),
+        content: Text(
+          "Your booking has been successfully created.",
+          style: TextStyle(
+            fontFamily: "Oswald",
+            fontSize: 18,
+            color: Colors.white70,
+          ),
+        ),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              onConfirmed();
+            },
+            child: Text("OK",
+                style: TextStyle(
+                  fontFamily: "Oswald",
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                )),
+          ),
+        ],
+      );
+    },
+  );
+}

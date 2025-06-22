@@ -4,7 +4,7 @@ import 'package:sqflite/sqflite.dart';
 enum ItemCategory { service, product }
 
 class Item {
-  final int id; // sub_id from item_option
+  final int id; // sub_id from item_option table
   final String name;
   final double price;
   final String parentItemName;

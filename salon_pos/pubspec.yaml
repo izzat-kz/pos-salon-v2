@@ -30,7 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  intl: ^0.18.1
+  intl: ^0.17.0
+  charts_flutter: ^0.11.0
   dotted_border: ^2.0.0
 
 
@@ -41,6 +42,8 @@ dependencies:
   printing: ^5.14.2
   path_provider: ^2.1.5
   sqflite: ^2.4.1
+  fl_chart: ^0.71.0
+  syncfusion_flutter_charts: ^21.2.4
 
 dev_dependencies:
   flutter_test:

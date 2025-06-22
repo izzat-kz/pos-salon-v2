@@ -15,14 +15,18 @@ class TransactionScreen extends StatefulWidget {
   final String paymentMethod;
   final bool isLoanTransaction;
   final Loan? selectedLoan;
+  final int customerPax;
+  final bool shouldRemoveLoan;
 
   TransactionScreen({
     Key? key,
     required this.totalAmount,
     required this.bill,
     required this.paymentMethod,
+    required this.customerPax,
     this.isLoanTransaction = false,
     this.selectedLoan,
+    this.shouldRemoveLoan = false,
   }) : super(key: key);
 
   @override
@@ -41,8 +45,10 @@ class _TransactionScreenState extends State<TransactionScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-              builder: (context) =>
-                  LoanBookScreen(totalAmount: widget.totalAmount)),
+              builder: (context) => LoanBookScreen(
+                    totalAmount: widget.totalAmount,
+                    customerPax: widget.customerPax,
+                  )),
         );
       });
     } else if (widget.paymentMethod != 'cash') {
@@ -163,6 +169,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                             builder: (context) =>
                                                 LoanBookScreen(
                                               totalAmount: widget.totalAmount,
+                                              customerPax: widget.customerPax,
                                             ),
                                           ),
                                         );
@@ -229,6 +236,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                 widget.bill,
                                 widget.isLoanTransaction,
                                 widget.selectedLoan,
+                                widget.customerPax,
+                                shouldRemoveLoan: widget.shouldRemoveLoan,
                               );
                             },
                             style: ElevatedButton.styleFrom(
@@ -278,7 +287,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                         ),
                         const SizedBox(height: 16),
                         Container(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.all(10.0),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             border: Border.all(
@@ -286,7 +295,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                             borderRadius: BorderRadius.circular(30),
                           ),
                           child: Image.asset(
-                            'assets/qrsalonpos.png',
+                            'assets/duitnowQR.PNG',
                             width: 420,
                             height: 410,
                             fit: BoxFit.cover,

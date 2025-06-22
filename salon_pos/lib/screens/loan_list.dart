@@ -64,8 +64,13 @@ class _LoanListScreenState extends State<LoanListScreen> {
                               itemBuilder: (context, index) {
                                 final loan = _loans[index];
                                 return GestureDetector(
-                                  onTap: () =>
-                                      showLoanDetailsPopup(context, loan),
+                                  onTap: () => showLoanDetailsPopup(
+                                    context,
+                                    loan.billItems.keys
+                                        .map((id) => id.toString())
+                                        .toList(),
+                                    loan,
+                                  ),
                                   child: Card(
                                     color: Colors.grey[800],
                                     shape: RoundedRectangleBorder(
@@ -81,17 +86,20 @@ class _LoanListScreenState extends State<LoanListScreen> {
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Text(loan.name,
-                                                  style: AppTextStyles.subtitle2
+                                                  style: AppTextStyles
+                                                      .subtitleMedium
                                                       .copyWith(
                                                           color: Colors.white)),
                                               SizedBox(height: 3),
                                               Text("Loan ID: ${loan.id}",
-                                                  style: AppTextStyles.subtitle
+                                                  style: AppTextStyles
+                                                      .subtitleSmall
                                                       .copyWith(
                                                           color:
                                                               Colors.white70)),
                                               Text("Date: ${loan.dateTime}",
-                                                  style: AppTextStyles.subtitle
+                                                  style: AppTextStyles
+                                                      .subtitleSmall
                                                       .copyWith(
                                                           color:
                                                               Colors.white70)),
@@ -104,7 +112,7 @@ class _LoanListScreenState extends State<LoanListScreen> {
                                             alignment: Alignment.center,
                                             child: Text(
                                               "RM${loan.totalAmount.toStringAsFixed(2)}",
-                                              style: AppTextStyles.subtitle
+                                              style: AppTextStyles.subtitleSmall
                                                   .copyWith(
                                                 fontSize: 35,
                                                 fontWeight: FontWeight.bold,

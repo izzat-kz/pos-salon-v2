@@ -10,13 +10,16 @@ bool isBillEmpty(Map<dynamic, int> bill) {
 
 /// ⚙️ validate Transaction
 void validateTransaction(
-    BuildContext context,
-    String action,
-    double totalAmount,
-    TextEditingController cashController,
-    Map<Item, int> bill,
-    bool isLoanTransaction,
-    Loan? selectedLoan) {
+  BuildContext context,
+  String action,
+  double totalAmount,
+  TextEditingController cashController,
+  Map<Item, int> bill,
+  bool isLoanTransaction,
+  Loan? selectedLoan,
+  int customerPax, {
+  bool shouldRemoveLoan = false,
+}) {
   if (cashController.text.isEmpty) {
     popupEmtpyBill(context, "Missing Input", "Please enter the cash amount.");
     return;
@@ -34,14 +37,17 @@ void validateTransaction(
     double changeAmount = cashPaid - totalAmount;
 
     popupChangeDue(
-        context,
-        "Change Due",
-        "RM ${changeAmount.toStringAsFixed(2)}",
-        action,
-        bill,
-        totalAmount,
-        isLoanTransaction,
-        selectedLoan);
+      context,
+      "Change Due",
+      "RM ${changeAmount.toStringAsFixed(2)}",
+      action,
+      bill,
+      totalAmount,
+      isLoanTransaction,
+      selectedLoan,
+      customerPax,
+      shouldRemoveLoan: shouldRemoveLoan,
+    );
   } catch (e) {
     popupEmtpyBill(
         context, "Invalid Input", "Please enter a valid cash amount.");
@@ -50,6 +56,18 @@ void validateTransaction(
 
 /// ⚙️ validate Loan Book's textfields
 class Validators {
+  static String? validateIC(String ic) {
+    try {
+      if (ic.isEmpty) throw Exception("IC number cannot be empty");
+      if (!RegExp(r'^\d{6}-\d{2}-\d{4}$').hasMatch(ic)) {
+        throw Exception("Invalid IC format (e.g. 010203-10-1234)");
+      }
+      return null;
+    } catch (e) {
+      return e.toString().replaceFirst('Exception: ', '');
+    }
+  }
+
   static String? validateName(String name) {
     try {
       if (name.isEmpty) throw Exception("Name cannot be empty");
@@ -129,6 +147,9 @@ String? validateStaffName(String? value) {
   }
   if (value.trim().length < 3) {
     return "Name must be at least 3 characters";
+  }
+  if (value == "admin") {
+    return "Name cannot be set admin";
   }
   return null;
 }
