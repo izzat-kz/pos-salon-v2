@@ -11,7 +11,8 @@ I.    from Android Studio; Setup a new virtual device emulator
 
 
 II.    from Visual Studio Code; run project
-		***make sure to install following Extensions in VS Code: Flutter, Dart
+
+***make sure to install following Extensions in VS Code: Flutter, Dart
 	
 	1. install the salon_pos.zip
 	2. place the salon_pos folder to any path, then open with Visual Studio Code
@@ -32,8 +33,15 @@ III.    from Pixel Tablet Emulator; simulate project
 
 ---Below are optional, if you would like to add all data samples into the db---
 
+.
+
+.
+
+.
+
 IV.    from Android Studio; adding datas into database
-		***find the sql file salon_db.sql in the zipped folder salon_pos, open and copy all the sql operations (or just copy INSERT INTO ... VALUES operations as tables are already created through debugging main.dart)
+
+***find the sql file salon_db.sql in the zipped folder salon_pos, open and copy all the sql operations (or just copy INSERT INTO ... VALUES operations as tables are already created through debugging main.dart)
 		
 	1. open Android Studio
 	2. open the project path salon_pos (anywhere you placed earlier)
