@@ -57,6 +57,7 @@ IV.    from Android Studio; adding datas into database
 
 
 Goodluck, do contact us if there are any problem regarding the installation
-izzat-kz    IZZAT KZ (Project Leader, Main Developer)
-hilman45    HILMAN (Designer, Project Architect)
-kinznafy71  HANAFI (Second Developer)
+
+- izzat-kz    IZZAT KZ (Project Leader, Main Developer)
+- hilman45    HILMAN (Designer, Project Architect)
+- kinznafy71  HANAFI (Second Developer)
