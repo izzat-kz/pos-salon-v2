@@ -6,7 +6,8 @@ I.    from Android Studio; Setup a new virtual device emulator
 	4. choose category tablet 
 	5. choose Pixel Tablet, size 10.95"
 	6. System Image: select release VanillaIceCream API Level 35, Target Android 15.0 (Google Play) 
-	7. check the startup orientation: Landscape > Finish
+	7. check the startup orientation: Landscape
+ 	8. finish
 
 
 II.    from Visual Studio Code; run project
