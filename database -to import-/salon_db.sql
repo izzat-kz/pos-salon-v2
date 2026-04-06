@@ -1,0 +1,152 @@
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE android_metadata (locale TEXT);
+INSERT INTO android_metadata VALUES('en_US');
+CREATE TABLE staff(
+        staff_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        staff_name TEXT NOT NULL,
+        password TEXT NOT NULL
+      );
+INSERT INTO staff VALUES(3001,'Hilman','1234');
+INSERT INTO staff VALUES(3002,'Hani','4321');
+INSERT INTO staff VALUES(3003,'sue','1234');
+INSERT INTO staff VALUES(3004,'Hanafi','1234');
+INSERT INTO staff VALUES(3005,'Izzat','1234');
+CREATE TABLE item_type(
+        item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        category TEXT NOT NULL
+      );
+INSERT INTO item_type VALUES(1,'Haircut (women)','Services');
+INSERT INTO item_type VALUES(2,'Haircut (men)','Services');
+INSERT INTO item_type VALUES(3,'Hair Colouring','Services');
+INSERT INTO item_type VALUES(4,'Hair Treatment','Services');
+INSERT INTO item_type VALUES(5,'Manicure','Services');
+INSERT INTO item_type VALUES(6,'Nail Art','Services');
+INSERT INTO item_type VALUES(7,'Facial','Services');
+INSERT INTO item_type VALUES(8,'Hair Oil','Products');
+INSERT INTO item_type VALUES(9,'Hand Cream','Products');
+INSERT INTO item_type VALUES(10,'Serums','Products');
+INSERT INTO item_type VALUES(11,'Accessories','Products');
+CREATE TABLE item_option(
+        sub_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        price REAL NOT NULL,
+        item_id INTEGER NOT NULL,
+        FOREIGN KEY (item_id) REFERENCES item_type(item_id) ON DELETE CASCADE
+      );
+INSERT INTO item_option VALUES(18,'Deep Condition',105.0,4);
+INSERT INTO item_option VALUES(19,'Keratin',163.0,4);
+INSERT INTO item_option VALUES(20,'Nail Trim',30.0,5);
+INSERT INTO item_option VALUES(21,'Shaping',50.0,5);
+INSERT INTO item_option VALUES(22,'Polish',70.0,5);
+INSERT INTO item_option VALUES(23,'Decorative Artwork',85.0,6);
+INSERT INTO item_option VALUES(24,'Cleansing',100.0,7);
+INSERT INTO item_option VALUES(25,'Exfoliating',85.0,7);
+INSERT INTO item_option VALUES(26,'Masking',70.0,7);
+INSERT INTO item_option VALUES(27,'Massage',73.0,7);
+INSERT INTO item_option VALUES(28,'Angry Koala (50ml)',35.0,8);
+INSERT INTO item_option VALUES(29,'Honey (50ml)',66.0,8);
+INSERT INTO item_option VALUES(42,'Nail Clipper',12.0,11);
+INSERT INTO item_option VALUES(43,'Nail Buffer',12.0,11);
+INSERT INTO item_option VALUES(44,'Eyelash Curler',140.0,11);
+INSERT INTO item_option VALUES(45,'Comb',3.0,11);
+INSERT INTO item_option VALUES(46,'Gua Sha',18.0,11);
+INSERT INTO item_option VALUES(47,'Brow Razor',28.0,11);
+INSERT INTO item_option VALUES(48,'Anti-frizz Serum (50ml)',34.2999999999999971,10);
+INSERT INTO item_option VALUES(49,'Keratin Serum (100ml)',52.7999999999999971,10);
+INSERT INTO item_option VALUES(50,'Lash Serum (4ml)',22.0,10);
+INSERT INTO item_option VALUES(51,'Brightening (30ml)',39.0,10);
+INSERT INTO item_option VALUES(52,'Full Dye',135.0,3);
+INSERT INTO item_option VALUES(53,'Touch-up',70.0,3);
+INSERT INTO item_option VALUES(68,'Wash',75.0,1);
+INSERT INTO item_option VALUES(69,'Cut',50.0,1);
+INSERT INTO item_option VALUES(70,'Basic Styling',80.0,1);
+INSERT INTO item_option VALUES(71,'Cut',40.0,2);
+INSERT INTO item_option VALUES(72,'Style',50.0,2);
+INSERT INTO item_option VALUES(73,'Aesop (70ml)',147.0,9);
+INSERT INTO item_option VALUES(74,'Body Shop (100ml)',49.0,9);
+CREATE TABLE booking(
+        booking_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cust_name TEXT NOT NULL,
+        cust_phone TEXT NOT NULL,
+        time TEXT,
+        date TEXT
+      );
+INSERT INTO booking VALUES(1,'Izzat KZ','0112345721','01:00 PM','2025-06-13');
+INSERT INTO booking VALUES(2,'izzat','01176271722','12:20 PM','2025-06-14');
+INSERT INTO booking VALUES(3,'Hilman','0112322332','09:00 AM','2025-06-15');
+INSERT INTO booking VALUES(4,'Robiah','0133233223','10:00 AM','2025-06-15');
+INSERT INTO booking VALUES(5,'Hanafi','0192323223','11:00 AM','2025-06-15');
+INSERT INTO booking VALUES(6,'mdm Robiah','01120898595','10:00 AM','2025-06-16');
+INSERT INTO booking VALUES(7,'wan','012345697322','09:40 AM','2025-06-16');
+CREATE TABLE loan (
+        loan_id TEXT PRIMARY KEY,
+        cust_name TEXT NOT NULL,
+        cust_phone TEXT NOT NULL,
+        cust_address TEXT,
+        totalAmount REAL NOT NULL,
+        billItems TEXT NOT NULL,
+        dateTime TEXT NOT NULL,
+        customer_pax INTEGER DEFAULT 1
+    , cust_ic TEXT NOT NULL DEFAULT '000000-00-0000');
+INSERT INTO loan VALUES('LN976531','Danish Reazal','01191028242','No 17, Jalan In 9/10, Bandar Instora, Seksyen 1, 43011, Kejora, Selangor',255.0,'{"10":3,"20":1}','18/06/2025 10:16PM',4,'091102-01-2024');
+INSERT INTO loan VALUES('LN863131','Lim Wei Jie','016 2293344','23A, Lorong Bukit Mata 5, Taman Sentosa Heights, 93300 Kuching, Sarawak, Malaysia',290.0,'{"53":1,"21":1,"23":2}','24/06/2025 04:37AM',1,'091101-10-0204');
+INSERT INTO loan VALUES('LN688601','Haji Ayah Bin Samuddin','011-2240591','No. 12, Jalan Seri Perdana 3/4, Taman Seri Perdana, 56000 Kuala Lumpur, Wilayah Persekutuan Kuala Lumpur, Malaysia',215.0,'{"71":1,"22":1,"28":3}','24/06/2025 07:04AM',2,'970102-03-0203');
+CREATE TABLE sales_report (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        bill_id INTEGER,
+        date TEXT NOT NULL,
+        total_amount REAL NOT NULL,
+        pax INTEGER NOT NULL,
+        staff_id INTEGER NOT NULL,
+        FOREIGN KEY (staff_id) REFERENCES staff(staff_id) ON DELETE SET NULL
+      );
+INSERT INTO sales_report VALUES(1,1749744419015,'2025-06-12T16:06:59.015488',125.0,5,3001);
+INSERT INTO sales_report VALUES(2,1749830959926,'2025-06-13T16:09:19.926349',222.800000000000011,3,3001);
+INSERT INTO sales_report VALUES(3,1749917566433,'2025-06-14T16:12:46.433306',406.0,6,3002);
+INSERT INTO sales_report VALUES(4,1749918480451,'2025-06-14T16:28:00.451950',85.0,3,3001);
+INSERT INTO sales_report VALUES(5,1749919056852,'2025-06-14T16:37:36.853066',105.599999999999994,7,3001);
+INSERT INTO sales_report VALUES(6,1749919340018,'2025-06-14T16:42:20.018228',125.0,8,3001);
+INSERT INTO sales_report VALUES(7,1750093514040,'2025-06-16T17:05:14.040136',239.300000000000011,2,3004);
+INSERT INTO sales_report VALUES(8,1750093794534,'2025-06-16T17:09:54.534153',183.0,1,3004);
+INSERT INTO sales_report VALUES(9,1750096950008,'2025-06-16T18:02:30.008430',22.0,4,3001);
+INSERT INTO sales_report VALUES(10,1750097823650,'2025-06-16T18:17:03.650334',100.0,3,3001);
+INSERT INTO sales_report VALUES(11,1750098091836,'2025-06-16T18:21:31.836083',100.0,3,3001);
+INSERT INTO sales_report VALUES(12,1750098574360,'2025-06-16T18:29:34.360408',55.0,3,3001);
+INSERT INTO sales_report VALUES(13,1750098613054,'2025-06-16T18:30:13.054991',100.0,10,3001);
+INSERT INTO sales_report VALUES(14,1750098639306,'2025-06-16T18:30:39.306885',10.0,10,3001);
+INSERT INTO sales_report VALUES(15,1750098955290,'2025-06-16T18:35:55.290241',15.0,10,3001);
+INSERT INTO sales_report VALUES(16,1750101136051,'2025-06-16T19:12:16.051341',20.0,10,3001);
+INSERT INTO sales_report VALUES(17,1750102088152,'2025-06-16T19:28:08.152091',65.0,10,3003);
+INSERT INTO sales_report VALUES(18,1750105024904,'2025-06-16T20:17:04.904044',185.0,7,3003);
+INSERT INTO sales_report VALUES(19,1750278621413,'2025-06-18T20:30:21.413421',190.0,5,3004);
+INSERT INTO sales_report VALUES(20,1750285014135,'2025-06-18T22:16:54.135060',25.0,4,3001);
+INSERT INTO sales_report VALUES(21,1750285047818,'2025-06-18T22:17:27.818208',200.0,4,3001);
+INSERT INTO sales_report VALUES(22,1750739739959,'2025-06-24T04:35:39.959508',791.0,4,3005);
+INSERT INTO sales_report VALUES(23,1750739905345,'2025-06-24T04:38:25.345748',90.0,1,3005);
+INSERT INTO sales_report VALUES(24,1750748069060,'2025-06-24T06:54:29.060517',66.0,1,3005);
+INSERT INTO sales_report VALUES(25,1750751506547,'2025-06-24T07:51:46.547949',100.0,2,3005);
+CREATE TABLE loan_payments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  loan_id TEXT,
+  amount_paid REAL,
+  payment_date TEXT
+);
+INSERT INTO loan_payments VALUES(1,'LN803707',100.0,'2025-06-16T18:21:31.850373');
+INSERT INTO loan_payments VALUES(2,'LN596265',100.0,'2025-06-16T18:30:13.068779');
+INSERT INTO loan_payments VALUES(3,'LN596265',10.0,'2025-06-16T18:30:39.322440');
+INSERT INTO loan_payments VALUES(4,'LN596265',15.0,'2025-06-16T18:35:55.307236');
+INSERT INTO loan_payments VALUES(5,'LN596265',20.0,'2025-06-16T19:12:16.071197');
+INSERT INTO loan_payments VALUES(6,'LN976531',25.0,'2025-06-18T22:16:54.151715');
+INSERT INTO loan_payments VALUES(7,'LN976531',200.0,'2025-06-18T22:17:27.832939');
+INSERT INTO loan_payments VALUES(8,'LN863131',90.0,'2025-06-24T04:38:25.361650');
+INSERT INTO loan_payments VALUES(9,'LN688601',100.0,'2025-06-24T07:51:46.559734');
+DELETE FROM sqlite_sequence;
+INSERT INTO sqlite_sequence VALUES('staff',3005);
+INSERT INTO sqlite_sequence VALUES('item_type',15);
+INSERT INTO sqlite_sequence VALUES('item_option',74);
+INSERT INTO sqlite_sequence VALUES('sales_report',25);
+INSERT INTO sqlite_sequence VALUES('booking',8);
+INSERT INTO sqlite_sequence VALUES('loan_payments',9);
+COMMIT;

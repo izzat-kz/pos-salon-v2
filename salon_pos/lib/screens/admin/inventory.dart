@@ -116,11 +116,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       GestureDetector(
                         onTap: _openAddPopup,
                         child: DottedBorder(
-                          color: Colors.grey.shade700,
-                          strokeWidth: 3,
-                          borderType: BorderType.RRect,
-                          radius: const Radius.circular(12),
-                          dashPattern: [8, 6],
+                          options: RoundedRectDottedBorderOptions(
+                            color: Colors.grey.shade700,
+                            strokeWidth: 3,
+                            radius: const Radius.circular(12),
+                            dashPattern: [8, 6],
+                          ),
                           child: Container(
                             decoration: BoxDecoration(
                               color: Colors.grey.shade300,

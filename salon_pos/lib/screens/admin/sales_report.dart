@@ -220,7 +220,8 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    "RM ${(point.y as num).toStringAsFixed(2)}",
+                    // FIX: Safer dynamic casting for Syncfusion v25
+                    "RM ${((point as dynamic).y as num).toStringAsFixed(2)}",
                     style: const TextStyle(
                       color: Colors.white,
                       fontFamily: "Oswald",
@@ -230,7 +231,8 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                 );
               },
             ),
-            series: <ChartSeries>[
+            // FIX: Removed <ChartSeries> to allow Cartesian inference
+            series: [
               LineSeries<SalesData, String>(
                 dataSource: data,
                 xValueMapper: (SalesData sales, _) => sales.day, // Date
@@ -311,7 +313,8 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    "RM ${(point.y as num).toStringAsFixed(2)}",
+                    // FIX: Safer dynamic casting
+                    "RM ${((point as dynamic).y as num).toStringAsFixed(2)}",
                     style: const TextStyle(
                       color: Colors.white,
                       fontFamily: "Oswald",
@@ -321,7 +324,8 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                 );
               },
             ),
-            series: <ChartSeries>[
+            // FIX: Removed <ChartSeries>
+            series: [
               ColumnSeries<SalesData, String>(
                 dataSource: data,
                 xValueMapper: (SalesData sales, _) => sales.day, // Date
@@ -338,8 +342,10 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
   }
 
   /// ⚙️ Summary Calculation Helpers
+
+  // FIX: Ensure the initial value is a double (0.0 instead of 0)
   double _calculateTotalSales(List<SalesReport> sales) =>
-      sales.fold(0, (sum, sale) => sum + sale.totalAmount);
+      sales.fold(0.0, (sum, sale) => sum + sale.totalAmount);
 
   int _calculateTotalPax(List<SalesReport> sales) =>
       sales.fold(0, (sum, sale) => sum + sale.pax);
@@ -365,7 +371,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     return BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(12),
-      boxShadow: [
+      boxShadow: const [
         BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
       ],
     );
