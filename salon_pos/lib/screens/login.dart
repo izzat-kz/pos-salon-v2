@@ -94,7 +94,6 @@ class _LoginPageState extends State<LoginPage> {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    
                     ShaderMask(
                       shaderCallback: (rect) {
                         return LinearGradient(
@@ -197,10 +196,10 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         // 🖼️ Team logo
                         Image.asset(
-                          'assets/Gr8 logo.png',
-                          height: 100,
+                          'assets/logo_gr8.png',
+                          height: 130,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 10),
                         Text(
                           "Salon POS",
                           style: TextStyle(
